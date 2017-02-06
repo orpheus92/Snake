@@ -3,8 +3,6 @@
 #include <Eigen/Core>
 #include <string>
 #include <cmath> 
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic>  extForce(
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Img,
