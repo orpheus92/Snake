@@ -1,0 +1,16 @@
+#define _USE_MATH_DEFINES
+
+#include <Eigen/Core>
+#include <string>
+#include <cmath> 
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic>  extForce(
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Img,
+double wl,
+double we,
+double wt,
+int sigma
+//int npts
+);
