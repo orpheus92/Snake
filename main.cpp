@@ -5,6 +5,8 @@
 #include <igl/png/writePNG.h>
 #include <igl/png/readPNG.h>
 //#include <igl/png/myread.h>
+#include <Eigen/Core>
+#include <Eigen/Dense>
 
 #include "interpcont.h"
 #include "extForce.h"
@@ -53,21 +55,23 @@ bool key_down(igl::viewer::Viewer& viewer, unsigned char key, int modifier)
   {
     // Allocate temporary buffers
     Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> R,G,B,A,I;
-    Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> temp;
+    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> temp;
     // Read the PNG
-    temp = igl::png::readPNG("testimage.png",R,G,B,A,temp);
+    temp = igl::png::readPNG("myim2.png",R,G,B,A,temp);
 //igl::png::readPNG("newim.png",R,G,B,A);
    // std::cout<<"R = "<<R<<std::endl;
     // Replace the mesh with a triangulated square
-
+//std::cout<<"temp"<<temp<<std::endl;
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P;
-	P.resize(5,2);
+	P.resize(7,2);
 	P <<
-	163,182,
-	166,233,
-	207,251,
-	248,205,
-	210,169;
+	38,25,
+	20,59,
+	39,97,
+	81,105,
+	109,84,
+	112,39,
+	73,24;
 
 //output contour
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> outcont;	
@@ -75,20 +79,20 @@ std::cout<<"before snake"<<std::endl;
 outcont = snake2D(P, //initial contour
 temp, //input gray-scale image
 1, //time step, default 1
-100, //# of iteration, default 100
+400, //# of iteration, default 100
 100, //# of pts to interpolate contours 
-10, // sigma to calculate img derivative default 10
-0.04, //attraction to lines, < 0 to black line; > 0 to white line; default 0.04
-2, //attraction to edge, default 2.0
-0.01, //attraction to end points, default 0.01
-20, //sigma to calculate gradient of edge energy image (give image force), default 20
-0.2, //membrane energy, default 0.2
-0.2, //thin plate energy, default 0.2
-0.1, //baloon force, default 0.1
-2, //weight of external img force, default 2
+3, // sigma to calculate img derivative default 10
+0, //attraction to lines, < 0 to black line; > 0 to white line; default 0.04 wl
+2, //attraction to edge, default 2.0 wedge
+0, //attraction to end points, default 0.01 wterm
+3, //sigma to calculate gradient of edge energy image (give image force), default 20
+0.1, //membrane energy, default 0.2 alpha
+0.1, //thin plate energy, default 0.2 beta
+-0.1, //baloon force, default 0.1 delta
+4, //weight of external img force, default 2 kappa 
 // the following is used for GVF snake
 0.2, //tradeoff between real edge vectors and noise vectors, default 0.2
-0, //GVF iteration, default 0
+100, //GVF iteration, default 0
 1 //sigma used to calculate laplacian in GVF, default 1
 );
 std::cout<<"after snake"<<std::endl;
@@ -175,8 +179,24 @@ std::cout<<"out contour = "<<outcont<<std::endl;
 // std::cout<<"G = "<<&G<<std::endl;
 // std::cout<<"B = "<<B<<std::endl;
 // std::cout<<"R = "<<R<<std::endl;
-    
-
+//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> aaaa;
+//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &bbbb;
+//aaaa.resize(5,2);
+//	aaaa <<
+//	96,63,
+//	51,147,
+//	98,242,
+//	280,97,
+//	182,59;
+//bbbb = aaaa;
+//std::cout<<"aaaa = "<< aaaa <<std::endl;
+//std::cout<<"bbbb = "<< bbbb <<std::endl;
+//aaaa.array() += 1; 
+//std::cout<<"aaaa1 = "<< aaaa <<std::endl;
+//std::cout<<"bbbb1 = "<< bbbb <<std::endl;
+//*aaaa.array() += 1;
+//std::cout<<"aaaa2 = "<< aaaa <<std::endl;
+//std::cout<<"bbbb2 = "<< bbbb <<std::endl;
   }
 
 

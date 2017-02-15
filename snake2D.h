@@ -7,11 +7,11 @@
 #include "extForce.h"
 #include "imDev.h"
 #include "interF.h"
-
+#include "GVFimF.h"
 
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> snake2D(
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P, //initial contour
-Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> input, //input gray-scale image
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> input, //input gray-scale image
 double gamma, //time step, default 1
 int iter, //# of iteration, default 100
 int npts, //# of pts to interpolate contours 

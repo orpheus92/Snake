@@ -2,9 +2,9 @@
 #include <stb_image.h>
 #include <iostream>
 //snake movement
-void snakeMove(
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> snakeMove(
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> intForce,
-Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &P,
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P,
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fx,
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy,
 double gamma,
@@ -24,7 +24,7 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> snake2D(
 //Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& O, 
 //Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& Pfinal, //final contour
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P, //initial contour
-Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> input, //input gray-scale image
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> input, //input gray-scale image
 double gamma, //time step, default 1
 int iter, //# of iteration, default 100
 int npts, //# of pts to interpolate contours 
@@ -43,8 +43,8 @@ int Giter, //GVF iteration, default 0
 double sigma3 //sigma used to calculate laplacian in GVF, default 1
 )
 {//Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> out;
-Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> img;
-img = input.cast<double>();
+//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> img;
+//img = input.cast<double>();
 std::cout<<"step 1"<<std::endl;
 // make clockwise contour  (always clockwise due to balloon force)
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> O;
@@ -57,28 +57,40 @@ O << P,
 double area;
 
 
-//std::cout<<"input = "<<input<<std::endl;
-std::cout<<"P1 = "<<P<<std::endl;
+//std::cout<<"input = "<<img<<std::endl;
+//std::cout<<"P1 = "<<P<<std::endl;
 // area inside the contour 
 area = 0.5*(O.block(1,0,P.rows(),1).cwiseProduct(O.block(2,1,P.rows(),1) - O.block(0,1,P.rows(),1))).sum();
 //std::cout<<"area = "<<area<<std::endl;
 //If the area inside  the contour is positive, change from counter-clockwise to  clockwise
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pcont;
 if (area>0)
 //P.colwise().reverse();
 //Problem here. will be fixed later
-P = P.colwise().reverse();
+{
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pre;
+Pre = P.colwise().reverse();
+Pcont = interpcont(Pre, npts);
+}
+else
+{
+Pcont = interpcont(P, npts);
+}
 //P = P.colwise().reverse();
 
 //std::cout<<"Pr = "<<P.colwise().reverse()<<std::endl;
 //Linear interpolation for initial contour
-Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pcont = interpcont(P, npts);
-std::cout<<"Pcont = "<<Pcont<<std::endl;
+
+//std::cout<<"Pcont = "<<Pcont<<std::endl;
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Eext;
 
 //Calculate external force
 //size = image size
-Eext = extForce(img,wl,we,wt,sigma);
-std::cout<<"Eext r = "<<Eext.rows()<<"Eext c ="<<Eext.cols()<<std::endl;
+
+//This is correct
+Eext = extForce(input,wl,we,wt,sigma);
+//std::cout<<"Eext =" << Eext<<std::endl;//<<"***********************************************************************************"<<std::endl;
+//std::cout<<"Eext r = "<<Eext.rowwise().sum()<<"Eext c ="<<Eext.colwise().sum()<<std::endl;
 //Make the external flow field
 //size = image size
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fx;
@@ -86,24 +98,35 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy;
 Fx = -imDev(Eext,sigma2,1)*2*sigma2*sigma2;
 Fy = -imDev(Eext,sigma2,2)*2*sigma2*sigma2;
 
-std::cout<<"Fx r = "<<Fx.rows()<<"Fx c ="<<Fx.cols()<<std::endl;
+//std::cout<<"Fx = "<<imDev(Eext,sigma2,1)<<std::endl;
+//std::cout<<"sFy = "<<Fy.colwise().sum()<<std::endl;
+//std::cout<<"Fy = "<<imDev(Eext,sigma2,2)<<std::endl;
+//std::cout<<"Fy r = "<<Fy.rows()<<"Fy c ="<<Fy.cols()<<std::endl;
 
-std::cout<<"Fy r = "<<Fy.rows()<<"Fy c ="<<Fy.cols()<<std::endl;
+
+//std::cout<<"Fx = "<<Fx<<std::endl;
 //Calcuate GVF Image Force  Might be needed later 
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fx2;
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy2;
-//Fx2=GVFimgF(Fx,Fy, mu, Giter, sigma3);
-//Fy2=GVFimgF(Fx,Fy, mu, Giter, sigma3);
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fx2;
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy2;
+//will be modified
+Fx2=GVFimF(Fx,Fy, mu, Giter, sigma3, 1);
+Fy2=GVFimF(Fx,Fy, mu, Giter, sigma3, 2);
 
+//std::cout<<"Fx2 = "<<Fx2<<std::endl;
+//std::cout<<"Fy2 = "<<Fy2<<std::endl;
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> intForce;
+
 //internal Force for snake
 //size = npts*npts
+//This is correct
 intForce = interF(npts,alpha,beta,gamma);
-
-std::cout<<"intf r = "<<intForce.rows()<<"intf c ="<<intForce.cols()<<std::endl;
-
+//std::cout<<"intf = "<<intForce<<std::endl;
+//std::cout<<"intf r = "<<intForce.rows()<<"intf c ="<<intForce.cols()<<std::endl;
+//std::cout<<"Fx2 = "<<Fx2<<std::endl;
+//std::cout<<"P="<<Pcont<<std::endl;
 for (int it = 0;it<iter;it++){
-snakeMove(intForce,Pcont,Fx,Fy,gamma,kappa,delta);
+//std::cout<<"in for "<<"it = "<<it<<std::endl;
+Pcont = snakeMove(intForce,Pcont,Fx2,Fy2,gamma,kappa,delta);
 //std::cout<<"it = "<< it <<"Pi = "<<Pcont<<std::endl;
 }
 
@@ -180,8 +203,12 @@ double y2;
 
 //bilinear interpolation
 for (int i = 0; i<P.rows();i++){
-x = P(i,0);
-y = P(i,1);
+//x = P(i,0);
+//y = P(i,1);
+
+y = P(i,0);
+x = P(i,1);
+
 indx = (int)ceil(x);
 indy = (int)ceil(y);
 
@@ -213,9 +240,9 @@ return out;
 }
 
 //This function will calculate one iteration of contour Snake movement
-void snakeMove(
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> snakeMove(
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> intForce, //internal force
-Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &P,//contour pts
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P,//contour pts
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fx,//external vector field
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy,//external vec field
 double gamma, //time step
@@ -230,7 +257,7 @@ imforce.resize(P.rows(),2);
 //baloon force
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> baforce;
 //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> baforcey;
-
+//clamp boundary
 P.col(0)=P.col(0).cwiseMax(0).cwiseMin(Fx.cols()-1);
 P.col(1)=P.col(1).cwiseMax(0).cwiseMin(Fx.rows()-1);
 
@@ -238,7 +265,7 @@ P.col(1)=P.col(1).cwiseMax(0).cwiseMin(Fx.rows()-1);
 imforce.col(0)=kappa*interp2(Fx,P);
 imforce.col(1)=kappa*interp2(Fy,P);
 
-
+//std::cout<<"imforce = "<<imforce<<std::endl;
 //Get baloon force on the contour points
 
 baforce = delta * baloonF(P);
@@ -253,7 +280,7 @@ P.col(0)=P.col(0).cwiseMax(0).cwiseMin(Fx.cols()-1);
 P.col(1)=P.col(1).cwiseMax(0).cwiseMin(Fx.rows()-1);
 
 
-return;
+return P;
 }
 
 //int main( int argc, const char** argv ){ }
