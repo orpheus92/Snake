@@ -1,4 +1,6 @@
 # Snake
 This is the Snake function in C++
-It needs to be fixed for the final contour
+Modified as GVF Snake
+It gives correct final contour. 
+Next step: visualize the process and output contour with Libigl 
 
