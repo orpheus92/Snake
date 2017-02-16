@@ -95,11 +95,13 @@ temp, //input gray-scale image
 100, //GVF iteration, default 0
 1 //sigma used to calculate laplacian in GVF, default 1
 );
-std::cout<<"after snake"<<std::endl;
+//std::cout<<"after snake"<<std::endl;
 
 std::cout<<"out contour = "<<outcont<<std::endl;
 
-    Eigen::MatrixXd VV(4,3);
+//Eigen::MatrixXd Vout;
+
+   /* Eigen::MatrixXd VV(4,3);
     VV <<
       -0.5,-0.5,0,
        0.5,-0.5,0,
@@ -116,7 +118,7 @@ std::cout<<"out contour = "<<outcont<<std::endl;
       1,0,
       1,1,
       0,1;
-
+*/
 	/*Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P;
 	P.resize(6,6);
 	P <<
@@ -165,16 +167,62 @@ std::cout<<"out contour = "<<outcont<<std::endl;
   
 //viewer.data.set_mesh(V3,F3);
 //viewer.launch();
+Eigen::MatrixXd Vout;
+Eigen::MatrixXi Eout;
+Eigen::MatrixXd Hout;
+Vout.resize(outcont.rows()+P.rows()+4,2);
+Eout.resize(outcont.rows()+P.rows()+4,2);
+for (int i = 0; i<outcont.rows();i++){
+Vout(i,0) = outcont(i,0)-60;
+Vout(i,1) = outcont(i,1)-60;
+Eout(i,0) = i;
+Eout(i,1) = i+1;
+}
+Eout(outcont.rows()-1,1) = 0;
+for (int j = 0; j<P.rows();j++){
+Vout(j+outcont.rows(),0) = (double)(P(j,0)-60);
+Vout(j+outcont.rows(),1) = (double)(P(j,1)-60);
+Eout(outcont.rows()+j,0) = outcont.rows()+j;
+Eout(j+outcont.rows(),1) = outcont.rows()+j+1;
+}
 
+Eout(outcont.rows()+P.rows()-1,1) = Eout(outcont.rows(),0);
+
+//manually set boundary
+Vout(outcont.rows()+P.rows(),0) = -60;
+Vout(outcont.rows()+P.rows(),1) = -60;
+Vout(outcont.rows()+P.rows()+1,0) = 60;
+Vout(outcont.rows()+P.rows()+1,1) = -60;
+Vout(outcont.rows()+P.rows()+2,0) = 60;
+Vout(outcont.rows()+P.rows()+2,1) = 60;
+Vout(outcont.rows()+P.rows()+3,0) = -60;
+Vout(outcont.rows()+P.rows()+3,1) = 60;
+
+
+Eout(outcont.rows()+P.rows(),0) = 107;
+Eout(outcont.rows()+P.rows(),1) = 108;
+Eout(outcont.rows()+P.rows()+1,0) = 108;
+Eout(outcont.rows()+P.rows()+1,1) = 109;
+Eout(outcont.rows()+P.rows()+2,0) = 109;
+Eout(outcont.rows()+P.rows()+2,1) = 110;
+Eout(outcont.rows()+P.rows()+3,0) = 110;
+Eout(outcont.rows()+P.rows()+3,1) = 107;
+
+
+Hout.resize(1,2);
+Hout << 0,0;
+igl::triangle::triangulate(Vout,Eout,Hout,"a1q",V2,F2);
+//viewer.data.set_mesh(V2,F2);
+std::cout<<"Vout = "<< Vout<<std::endl;
     viewer.data.clear();
-    viewer.data.set_mesh(VV,FF);
-    viewer.data.set_uv(UV);
-    viewer.core.align_camera_center(VV);
+    viewer.data.set_mesh(V2,F2);
+  //  viewer.data.set_uv(UV);
+  //  viewer.core.align_camera_center(VV);
     viewer.core.show_texture = true;
 
     // Use the image as a texture
 //std::cout<< temp <<std::endl;
-    viewer.data.set_texture(R,G,B);
+  //  viewer.data.set_texture(R,G,B);
 
 // std::cout<<"G = "<<&G<<std::endl;
 // std::cout<<"B = "<<B<<std::endl;
@@ -219,10 +267,15 @@ int main(int argc, char *argv[])
 xy.resize(10,2);
 xyedge.resize(10,2);
 
-  V << -1,-1, 1,-1, 1,1, -1, 1,
+ V << 100,100, 200,100, 200,200, 100, 200,
+       50,50, 250,50, 250,250, 50, 250,
+       0,0, 300,0, 300,300, 0, 300;
+
+/*  V << -1,-1, 1,-1, 1,1, -1, 1,
        -2,-2, 2,-2, 2,2, -2, 2,
        -3,-3, 3,-3, 3,3, -3, 3;
-
+*/
+//V = V-150;
   E << 0,1, 1,2, 2,3, 3,0,
        4,5, 5,6, 6,7, 7,4,
        8,9, 9,10, 10,11, 11,8;
@@ -231,7 +284,7 @@ xyedge.resize(10,2);
 
   // Triangulate the interior
  // igl::triangle::triangulate(V,E,H,"a0.005q",V2,F2);
-igl::triangle::triangulate(V,E,H,"a0.005q",V2,F2);
+igl::triangle::triangulate(V,E,H,"a5q",V2,F2);
   // Plot the generated mesh
   igl::viewer::Viewer viewer;
 
