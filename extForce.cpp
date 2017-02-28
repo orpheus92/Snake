@@ -6,7 +6,7 @@
 typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> MatrixXd;
 typedef Eigen::Matrix<double,Eigen::Dynamic,1> VectorXd;
 
-
+//Imfilter function that uses correlation
 MatrixXd compute2(MatrixXd X, MatrixXd W, bool flip, int stride_x, int stride_y);
 void imfilter2(Eigen::MatrixXd src_image,Eigen::MatrixXd filter,Eigen::MatrixXd &dst_image);
 
@@ -36,38 +36,16 @@ Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Gy;
 Gy.resize(1,total);
 
 for (int i = 0; i< total;i++){
-	//for (int j = 0; j< total;j++){
-//std::cout<<"i = "<<i<<" i-3sig = "<<i-sigma*3<<std::endl;
+
 		x(i,0) = i-sigma*3;
 		y(0,i) = i-sigma*3;
 }
-
-
-//Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Gxx;
-//Gxx.resize(total,total);
-//Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Gyy;
-//Gyy.resize(total,total);
-//Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Gxy;
-//Gxy.resize(total,total);
-
-
-//Eigen::Matrix<double, total,total> Gx;
-//Eigen::Matrix<double, total,total> Gy;
-//Eigen::Matrix<double, total,total> Gxx;
-//Eigen::Matrix<double, total,total> Gyy;
-//Eigen::Matrix<double, total,total> Gxy;
-
-
-
-
 
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Ix;
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Iy;
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Ixx;
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Iyy;
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Ixy;
-
-
 
 for (int type =0;type<5; type++ )
 {if (type == 0){
@@ -124,32 +102,21 @@ for (int i = 0; i< total;i++){
 }//end for j
 }*/
 //end for i
-//std::cout<<"x = "<<x<<std::endl;
-//std::cout<<"y = "<<y<<std::endl;
-//Gaussian Based Image Derivatives
 
+//Gaussian Based Image Derivatives
 
 //static void 	cv::eigen2cv (const Eigen::Matrix< _Tp, _rows, _cols, _options, _maxRows, _maxCols > &src, Mat &dst)
 //cv::eigen2cv (Img, Mat &dst);
-//std::cout<<"old Gx"<<Gx<<std::endl;
-//std::cout<<"old Gy"<<Gy<<std::endl;
-
 
 //imfilter2(Img, Gx, Ix);
 //imfilter2(Img, Gy, Iy);
 //imfilter2(Img, Gxx, Ixx);
 //imfilter2(Img, Gyy, Iyy);
 //imfilter2(Img, Gxy, Ixy);
-//std::cout<<"Img = "<<Img<<std::endl;
-//std::cout<<"Ix = "<<Ix<<std::endl;
-//std::cout<<"Iyy = "<<Iyy<<std::endl;
-//std::cout<<"Iy = "<<Iy<<std::endl;
 
 //Line Energy
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic>Eline;
 Eline = imgaussian(Img,sigma);
-//std::cout<<"Eline = "<<Eline<<std::endl;
-//std::cout<<Iyy.cwiseProduct(Ix2) <<std::endl;
 //Line Termination Energy
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic>Eterm;
 //R = P.cwiseProduct(Q);   
@@ -168,7 +135,7 @@ Eterm = nom.cwiseQuotient(denom);
 
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic>Eedge;
 Eedge = (Ix.array().square() + Iy.array().square()).array().sqrt(); 
-//std::cout<<"Eedge = "<<Eedge<<std::endl;
+
 //Externa =l Energy
 Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic>Eext;
 
@@ -177,8 +144,7 @@ Eext = (wl*Eline.array() - we*Eedge.array() -wt * Eterm.array());
 return Eext;
 }
 
-
-
+//Imfilter function that uses correlation 
 void imfilter2(Eigen::MatrixXd src_image, Eigen::MatrixXd filter,Eigen::MatrixXd &dst_image)
 {
 	dst_image = Eigen::MatrixXd::Zero(src_image.rows(),src_image.cols()) ;	
@@ -234,17 +200,11 @@ if (Sigma>0){
 
 	    HH = H.array()/(H.sum());
 
-	//Eigen::Matrix<double, HH.rows(),1> Hx;
-	//Eigen::Matrix<double, 1,HH.rows()> Hy;
-	//Hx = HH;
-	//Hy = HH.transpose();
 	Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Im2;
 	Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> out;
 	imfilter2(I, HH, Im2);
 	imfilter2(Im2, HH.transpose(), out);
 
-	//Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Iyy;
-	//Eigen::Matrix<double, Eigen::Dynamic,Eigen::Dynamic> Ixy;
 	return out;
 	}
 else
@@ -292,5 +252,6 @@ MatrixXd compute2(MatrixXd X, MatrixXd W, bool flip, int stride_x, int stride_y)
            }
 	return out;       
 	}
+
 
 

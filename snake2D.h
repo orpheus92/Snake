@@ -1,13 +1,25 @@
 #include <Eigen/Core>
+#include <Eigen/Dense>
+
+#include <unistd.h>
 #include <string>
 #include <cmath>
 #include <iostream>
-
 #include "interpcont.h"
 #include "extForce.h"
 #include "imDev.h"
 #include "interF.h"
 #include "GVFimF.h"
+
+//#include <GLFW/glfw3.h>
+//#include <igl/get_seconds.h>
+#include <igl/viewer/Viewer.h>
+#include "tutorial_shared_path.h"
+#include <igl/triangle/triangulate.h>
+#include <igl/png/writePNG.h>
+#include <igl/png/readPNG.h>
+
+
 
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> snake2D(
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P, //initial contour
@@ -27,6 +39,7 @@ double kappa, //weight of external img force, default 2
 // the following is used for GVF snake
 double mu, //tradeoff between real edge vectors and noise vectors, default 0.2
 int Giter, //GVF iteration, default 0
-double sigma3 //sigma used to calculate laplacian in GVF, default 1
+double sigma3, //sigma used to calculate laplacian in GVF, default 1
+igl::viewer::Viewer& viewer
 );
 

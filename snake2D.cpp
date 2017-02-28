@@ -1,6 +1,7 @@
 #include "snake2D.h"
 #include <stb_image.h>
 #include <iostream>
+
 //snake movement
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> snakeMove(
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> intForce,
@@ -20,9 +21,6 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P);
 
 //main function for snake
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> snake2D(
-
-//Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& O, 
-//Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& Pfinal, //final contour
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P, //initial contour
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> input, //input gray-scale image
 double gamma, //time step, default 1
@@ -40,33 +38,25 @@ double kappa, //weight of external img force, default 2
 // the following is used for GVF snake
 double mu, //tradeoff between real edge vectors and noise vectors, default 0.2
 int Giter, //GVF iteration, default 0
-double sigma3 //sigma used to calculate laplacian in GVF, default 1
+double sigma3, //sigma used to calculate laplacian in GVF, default 1
+igl::viewer::Viewer& viewer
 )
-{//Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> out;
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> img;
-//img = input.cast<double>();
-std::cout<<"step 1"<<std::endl;
+{
 // make clockwise contour  (always clockwise due to balloon force)
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> O;
 O.resize(2+P.rows(),2);
-//Eigen::Matrix<double,2+P.rows(),2> O;
 
 O << P,
      P.row(0),
      P.row(1);
 double area;
 
-
-//std::cout<<"input = "<<img<<std::endl;
-//std::cout<<"P1 = "<<P<<std::endl;
 // area inside the contour 
 area = 0.5*(O.block(1,0,P.rows(),1).cwiseProduct(O.block(2,1,P.rows(),1) - O.block(0,1,P.rows(),1))).sum();
-//std::cout<<"area = "<<area<<std::endl;
+
 //If the area inside  the contour is positive, change from counter-clockwise to  clockwise
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pcont;
 if (area>0)
-//P.colwise().reverse();
-//Problem here. will be fixed later
 {
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pre;
 Pre = P.colwise().reverse();
@@ -76,12 +66,8 @@ else
 {
 Pcont = interpcont(P, npts);
 }
-//P = P.colwise().reverse();
 
-//std::cout<<"Pr = "<<P.colwise().reverse()<<std::endl;
 //Linear interpolation for initial contour
-
-//std::cout<<"Pcont = "<<Pcont<<std::endl;
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Eext;
 
 //Calculate external force
@@ -89,8 +75,7 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Eext;
 
 //This is correct
 Eext = extForce(input,wl,we,wt,sigma);
-//std::cout<<"Eext =" << Eext<<std::endl;//<<"***********************************************************************************"<<std::endl;
-//std::cout<<"Eext r = "<<Eext.rowwise().sum()<<"Eext c ="<<Eext.colwise().sum()<<std::endl;
+
 //Make the external flow field
 //size = image size
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fx;
@@ -98,13 +83,6 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy;
 Fx = -imDev(Eext,sigma2,1)*2*sigma2*sigma2;
 Fy = -imDev(Eext,sigma2,2)*2*sigma2*sigma2;
 
-//std::cout<<"Fx = "<<imDev(Eext,sigma2,1)<<std::endl;
-//std::cout<<"sFy = "<<Fy.colwise().sum()<<std::endl;
-//std::cout<<"Fy = "<<imDev(Eext,sigma2,2)<<std::endl;
-//std::cout<<"Fy r = "<<Fy.rows()<<"Fy c ="<<Fy.cols()<<std::endl;
-
-
-//std::cout<<"Fx = "<<Fx<<std::endl;
 //Calcuate GVF Image Force  Might be needed later 
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fx2;
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy2;
@@ -112,28 +90,148 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy2;
 Fx2=GVFimF(Fx,Fy, mu, Giter, sigma3, 1);
 Fy2=GVFimF(Fx,Fy, mu, Giter, sigma3, 2);
 
-//std::cout<<"Fx2 = "<<Fx2<<std::endl;
-//std::cout<<"Fy2 = "<<Fy2<<std::endl;
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> intForce;
 
 //internal Force for snake
-//size = npts*npts
+//size = npts by npts
 //This is correct
 intForce = interF(npts,alpha,beta,gamma);
-//std::cout<<"intf = "<<intForce<<std::endl;
-//std::cout<<"intf r = "<<intForce.rows()<<"intf c ="<<intForce.cols()<<std::endl;
-//std::cout<<"Fx2 = "<<Fx2<<std::endl;
-//std::cout<<"P="<<Pcont<<std::endl;
+std::cout<<"internal force = "<<intForce<<std::endl;
+Eigen::MatrixXd Hout;
+Hout.resize(1,2);
+Hout << 0,0;
+
+// Triangulated interior
+Eigen::MatrixXd V2;
+Eigen::MatrixXi F2;
+
+//igl::viewer::Viewer viewer;
+//viewer.launch();
+//viewer.launch();
 for (int it = 0;it<iter;it++){
-//std::cout<<"in for "<<"it = "<<it<<std::endl;
+
 Pcont = snakeMove(intForce,Pcont,Fx2,Fy2,gamma,kappa,delta);
-//std::cout<<"it = "<< it <<"Pi = "<<Pcont<<std::endl;
+
+//Implement Draw Mesh Here
+/*
+double rsize =(double)input.rows();
+double csize =(double)input.cols();
+Eigen::MatrixXd Vout;
+Eigen::MatrixXi Eout;
+
+Vout.resize(Pcont.rows()+P.rows()+4,2);
+Eout.resize(Pcont.rows()+P.rows()+4,2);
+for (int i = 0; i<Pcont.rows();i++){
+Vout(i,0) = Pcont(i,0)-csize/2;
+Vout(i,1) = Pcont(i,1)-rsize/2;
+Eout(i,0) = i;
+Eout(i,1) = i+1;
+}
+Eout(Pcont.rows()-1,1) = 0;
+for (int j = 0; j<P.rows();j++){
+Vout(j+Pcont.rows(),0) = (double)(P(j,0)-csize/2);
+Vout(j+Pcont.rows(),1) = (double)(P(j,1)-rsize/2);
+Eout(Pcont.rows()+j,0) = Pcont.rows()+j;
+Eout(j+Pcont.rows(),1) = Pcont.rows()+j+1;
 }
 
+Eout(Pcont.rows()+P.rows()-1,1) = Eout(Pcont.rows(),0);
+
+//manually set boundary
+Vout(Pcont.rows()+P.rows(),0) = -csize/2;
+Vout(Pcont.rows()+P.rows(),1) = -rsize/2;
+Vout(Pcont.rows()+P.rows()+1,0) = csize/2;
+Vout(Pcont.rows()+P.rows()+1,1) = -rsize/2;
+Vout(Pcont.rows()+P.rows()+2,0) = csize/2;
+Vout(Pcont.rows()+P.rows()+2,1) = rsize/2;
+Vout(Pcont.rows()+P.rows()+3,0) = -csize/2;
+Vout(Pcont.rows()+P.rows()+3,1) = rsize/2;
+
+
+Eout(Pcont.rows()+P.rows(),0) = P.rows()+Pcont.rows();
+Eout(Pcont.rows()+P.rows(),1) = P.rows()+Pcont.rows()+1;
+Eout(Pcont.rows()+P.rows()+1,0) = P.rows()+Pcont.rows()+1;
+Eout(Pcont.rows()+P.rows()+1,1) = P.rows()+Pcont.rows()+2;
+Eout(Pcont.rows()+P.rows()+2,0) = P.rows()+Pcont.rows()+2;
+Eout(Pcont.rows()+P.rows()+2,1) = P.rows()+Pcont.rows()+3;
+Eout(Pcont.rows()+P.rows()+3,0) = P.rows()+Pcont.rows()+3;
+Eout(Pcont.rows()+P.rows()+3,1) = P.rows()+Pcont.rows();
+
+igl::triangle::triangulate(Vout,Eout,Hout,"a1q",V2,F2);
+
+    viewer.data.clear();
+    viewer.data.set_mesh(V2,F2);
+    viewer.core.align_camera_center(V2,F2);
+    viewer.core.show_texture = false;
+   
+ viewer.core.animation_max_fps = 30.;
+
+    double tic = get_seconds();
+    glfwPollEvents();
+        // In microseconds
+        double duration = 1000000.*(get_seconds()-tic);
+        const double min_duration = 1000000./30;
+        if(duration<min_duration)
+        {
+          std::this_thread::sleep_for(std::chrono::microseconds((int)(min_duration-duration)));
+        }
+
+
+	//for (int xx = 0; xx<1000000;xx++){
+	//std::cout<<xx<<std::endl;
+	//}
+*/
+}
+double rsize =(double)input.rows();
+double csize =(double)input.cols();
+Eigen::MatrixXd Vout;
+Eigen::MatrixXi Eout;
+
+Vout.resize(Pcont.rows()+P.rows()+4,2);
+Eout.resize(Pcont.rows()+P.rows()+4,2);
+for (int i = 0; i<Pcont.rows();i++){
+Vout(i,0) = Pcont(i,0)-csize/2;
+Vout(i,1) = Pcont(i,1)-rsize/2;
+Eout(i,0) = i;
+Eout(i,1) = i+1;
+}
+Eout(Pcont.rows()-1,1) = 0;
+for (int j = 0; j<P.rows();j++){
+Vout(j+Pcont.rows(),0) = (double)(P(j,0)-csize/2);
+Vout(j+Pcont.rows(),1) = (double)(P(j,1)-rsize/2);
+Eout(Pcont.rows()+j,0) = Pcont.rows()+j;
+Eout(j+Pcont.rows(),1) = Pcont.rows()+j+1;
+}
+
+Eout(Pcont.rows()+P.rows()-1,1) = Eout(Pcont.rows(),0);
+
+//manually set boundary
+Vout(Pcont.rows()+P.rows(),0) = -csize/2;
+Vout(Pcont.rows()+P.rows(),1) = -rsize/2;
+Vout(Pcont.rows()+P.rows()+1,0) = csize/2;
+Vout(Pcont.rows()+P.rows()+1,1) = -rsize/2;
+Vout(Pcont.rows()+P.rows()+2,0) = csize/2;
+Vout(Pcont.rows()+P.rows()+2,1) = rsize/2;
+Vout(Pcont.rows()+P.rows()+3,0) = -csize/2;
+Vout(Pcont.rows()+P.rows()+3,1) = rsize/2;
+
+
+Eout(Pcont.rows()+P.rows(),0) = P.rows()+Pcont.rows();
+Eout(Pcont.rows()+P.rows(),1) = P.rows()+Pcont.rows()+1;
+Eout(Pcont.rows()+P.rows()+1,0) = P.rows()+Pcont.rows()+1;
+Eout(Pcont.rows()+P.rows()+1,1) = P.rows()+Pcont.rows()+2;
+Eout(Pcont.rows()+P.rows()+2,0) = P.rows()+Pcont.rows()+2;
+Eout(Pcont.rows()+P.rows()+2,1) = P.rows()+Pcont.rows()+3;
+Eout(Pcont.rows()+P.rows()+3,0) = P.rows()+Pcont.rows()+3;
+Eout(Pcont.rows()+P.rows()+3,1) = P.rows()+Pcont.rows();
+
+igl::triangle::triangulate(Vout,Eout,Hout,"a1q",V2,F2);
+
+    viewer.data.clear();
+    viewer.data.set_mesh(V2,F2);
+    viewer.core.align_camera_center(V2,F2);
+    viewer.core.show_texture = false;
 return Pcont; 
-
-
-
 }
 
 //function to calculate baloon force
@@ -168,12 +266,8 @@ for(int i = 0; i<P.rows();i++){
 	
 }
 l = (dx.array().square()+dy.array().square()).cwiseSqrt() ;            
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> xt; 
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> yt; 
+
 out.resize(P.rows(),2);
-//xt = p.col(0);
-//yt = p.col(1);
-//int row; 
 out.col(0) = -dy.array() / l.array();  
 out.col(1) = dx.array() / l.array();  
 return out;
@@ -203,8 +297,6 @@ double y2;
 
 //bilinear interpolation
 for (int i = 0; i<P.rows();i++){
-//x = P(i,0);
-//y = P(i,1);
 
 y = P(i,0);
 x = P(i,1);
@@ -228,11 +320,8 @@ y2 = (double)(indy);
 		q12 = mypic(indy-1,indx);
 		q21 = mypic(indy,indx-1);
 		q11 = mypic(indy-1,indx-1);
-
-		
 		out(i,0) = q11*(x2-x)*(y2-y) + q21*(x-x1)*(y2-y) + q12*(x2-x)*(y-y1) + q22*(x-x1)*(y-y1);
 	}
-	
 
 }
 
@@ -248,15 +337,16 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Fy,//external vec field
 double gamma, //time step
 double kappa,//external field weight
 double delta) //Balloon Force Weight)
-{// Clamp contour to boundary
-//rows and cols   might be checked later 
+{
+//Clamp contour to boundary
+//rows and cols might be checked later 
 //image force
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> imforce;
 imforce.resize(P.rows(),2);
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> imforcey;
+
 //baloon force
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> baforce;
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> baforcey;
+
 //clamp boundary
 P.col(0)=P.col(0).cwiseMax(0).cwiseMin(Fx.cols()-1);
 P.col(1)=P.col(1).cwiseMax(0).cwiseMin(Fx.rows()-1);
@@ -265,7 +355,6 @@ P.col(1)=P.col(1).cwiseMax(0).cwiseMin(Fx.rows()-1);
 imforce.col(0)=kappa*interp2(Fx,P);
 imforce.col(1)=kappa*interp2(Fy,P);
 
-//std::cout<<"imforce = "<<imforce<<std::endl;
 //Get baloon force on the contour points
 
 baforce = delta * baloonF(P);
@@ -283,5 +372,4 @@ P.col(1)=P.col(1).cwiseMax(0).cwiseMin(Fx.rows()-1);
 return P;
 }
 
-//int main( int argc, const char** argv ){ }
 

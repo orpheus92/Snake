@@ -4,7 +4,6 @@
 #include <igl/triangle/triangulate.h>
 #include <igl/png/writePNG.h>
 #include <igl/png/readPNG.h>
-//#include <igl/png/myread.h>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
@@ -41,9 +40,7 @@ bool key_down(igl::viewer::Viewer& viewer, unsigned char key, int modifier)
     Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> G(1280,800);
     Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> B(1280,800);
     Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> A(1280,800);
-   // Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> R(1280,800);
 
-    std::cout<<"first if "<<std::endl;
     // Draw the scene in the buffers
     viewer.core.draw_buffer(viewer.data,viewer.opengl,false,R,G,B,A);
 
@@ -58,10 +55,8 @@ bool key_down(igl::viewer::Viewer& viewer, unsigned char key, int modifier)
     Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> temp;
     // Read the PNG
     temp = igl::png::readPNG("myim2.png",R,G,B,A,temp);
-//igl::png::readPNG("newim.png",R,G,B,A);
-   // std::cout<<"R = "<<R<<std::endl;
+
     // Replace the mesh with a triangulated square
-//std::cout<<"temp"<<temp<<std::endl;
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P;
 	P.resize(7,2);
 	P <<
@@ -75,7 +70,6 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P;
 
 //output contour
 Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> outcont;	
-std::cout<<"before snake"<<std::endl;
 outcont = snake2D(P, //initial contour
 temp, //input gray-scale image
 1, //time step, default 1
@@ -93,95 +87,29 @@ temp, //input gray-scale image
 // the following is used for GVF snake
 0.2, //tradeoff between real edge vectors and noise vectors, default 0.2
 100, //GVF iteration, default 0
-1 //sigma used to calculate laplacian in GVF, default 1
+1, //sigma used to calculate laplacian in GVF, default 1
+viewer
 );
-//std::cout<<"after snake"<<std::endl;
 
 std::cout<<"out contour = "<<outcont<<std::endl;
 
-//Eigen::MatrixXd Vout;
-
-   /* Eigen::MatrixXd VV(4,3);
-    VV <<
-      -0.5,-0.5,0,
-       0.5,-0.5,0,
-       0.5, 0.5,0,
-      -0.5, 0.5,0;
-    Eigen::MatrixXi FF(2,3);
-    FF <<
-      0,1,2,
-      2,3,0;
-//std::cout<<FF<<std::endl;
-    Eigen::MatrixXd UV(4,2);
-    UV <<
-      0,0,
-      1,0,
-      1,1,
-      0,1;
-*/
-	/*Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> P;
-	P.resize(6,6);
-	P <<
-	1,5,6,4,1,12,
-	2,10,4,8,12,12,
-	3,13,32,1,7,11,
-	5,16,21,1,5,2,
-	8,20,12,5,1,8,
-	10,24,1,4,11,6;
-
-	Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pp;
-	Pp.resize(6,2);
-	Pp <<
-	1,5,
-	2,10,
-	3,13,
-	5,16,
-	8,20,
-	10,6;
-*/
-
-
-//	Eigen::VectorXd v;
-//v.setLinSpaced(100,1,100); 
-//std::cout<<"v = "<<v<<std::endl;
-//std::cout<<"power2 = "<<P.array().square()<<"negative = "<<-P<<std::endl;
-	//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pout0, Pout;
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Pout;
-//Pout = interpcont(Pp,20);
-
-//std::cout<<"Pout = "<<Pout<<std::endl;
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Eext;
-//Eext = extForce(P,0.04,2,0.01,10);
-//Eext = P.inverse();//imDev(P,10,1);
-//std::cout<<"min = "<<P.cwiseMin(18).cwiseMax(5)  <<std::endl;
-
-//std::cout<<"r = "<<Pout.rows()<<"c = "<<Pout.cols()<<"Pout"<<Pout<<std::endl;
-
-
-  //   Eigen::MatrixXd HH(1,2);
-
-// H << 0,1;
-  //  igl::triangle::triangulate(VV,FF,HH,"a0.005q",V3,F3);
-  // Plot the generated mesh
-  //igl::viewer::Viewer viewer;
-  
-//viewer.data.set_mesh(V3,F3);
-//viewer.launch();
+double rsize =(double)temp.rows();
+double csize =(double)temp.cols();
 Eigen::MatrixXd Vout;
 Eigen::MatrixXi Eout;
 Eigen::MatrixXd Hout;
 Vout.resize(outcont.rows()+P.rows()+4,2);
 Eout.resize(outcont.rows()+P.rows()+4,2);
 for (int i = 0; i<outcont.rows();i++){
-Vout(i,0) = outcont(i,0)-60;
-Vout(i,1) = outcont(i,1)-60;
+Vout(i,0) = outcont(i,0)-csize/2;
+Vout(i,1) = outcont(i,1)-rsize/2;
 Eout(i,0) = i;
 Eout(i,1) = i+1;
 }
 Eout(outcont.rows()-1,1) = 0;
 for (int j = 0; j<P.rows();j++){
-Vout(j+outcont.rows(),0) = (double)(P(j,0)-60);
-Vout(j+outcont.rows(),1) = (double)(P(j,1)-60);
+Vout(j+outcont.rows(),0) = (double)(P(j,0)-csize/2);
+Vout(j+outcont.rows(),1) = (double)(P(j,1)-rsize/2);
 Eout(outcont.rows()+j,0) = outcont.rows()+j;
 Eout(j+outcont.rows(),1) = outcont.rows()+j+1;
 }
@@ -189,62 +117,34 @@ Eout(j+outcont.rows(),1) = outcont.rows()+j+1;
 Eout(outcont.rows()+P.rows()-1,1) = Eout(outcont.rows(),0);
 
 //manually set boundary
-Vout(outcont.rows()+P.rows(),0) = -60;
-Vout(outcont.rows()+P.rows(),1) = -60;
-Vout(outcont.rows()+P.rows()+1,0) = 60;
-Vout(outcont.rows()+P.rows()+1,1) = -60;
-Vout(outcont.rows()+P.rows()+2,0) = 60;
-Vout(outcont.rows()+P.rows()+2,1) = 60;
-Vout(outcont.rows()+P.rows()+3,0) = -60;
-Vout(outcont.rows()+P.rows()+3,1) = 60;
+Vout(outcont.rows()+P.rows(),0) = -csize/2;
+Vout(outcont.rows()+P.rows(),1) = -rsize/2;
+Vout(outcont.rows()+P.rows()+1,0) = csize/2;
+Vout(outcont.rows()+P.rows()+1,1) = -rsize/2;
+Vout(outcont.rows()+P.rows()+2,0) = csize/2;
+Vout(outcont.rows()+P.rows()+2,1) = rsize/2;
+Vout(outcont.rows()+P.rows()+3,0) = -csize/2;
+Vout(outcont.rows()+P.rows()+3,1) = rsize/2;
 
 
-Eout(outcont.rows()+P.rows(),0) = 107;
-Eout(outcont.rows()+P.rows(),1) = 108;
-Eout(outcont.rows()+P.rows()+1,0) = 108;
-Eout(outcont.rows()+P.rows()+1,1) = 109;
-Eout(outcont.rows()+P.rows()+2,0) = 109;
-Eout(outcont.rows()+P.rows()+2,1) = 110;
-Eout(outcont.rows()+P.rows()+3,0) = 110;
-Eout(outcont.rows()+P.rows()+3,1) = 107;
-
+Eout(outcont.rows()+P.rows(),0) = P.rows()+100;
+Eout(outcont.rows()+P.rows(),1) = P.rows()+100+1;
+Eout(outcont.rows()+P.rows()+1,0) = P.rows()+100+1;
+Eout(outcont.rows()+P.rows()+1,1) = P.rows()+100+2;
+Eout(outcont.rows()+P.rows()+2,0) = P.rows()+100+2;
+Eout(outcont.rows()+P.rows()+2,1) = P.rows()+100+3;
+Eout(outcont.rows()+P.rows()+3,0) = P.rows()+100+3;
+Eout(outcont.rows()+P.rows()+3,1) = P.rows()+100;
 
 Hout.resize(1,2);
 Hout << 0,0;
-igl::triangle::triangulate(Vout,Eout,Hout,"a1q",V2,F2);
-//viewer.data.set_mesh(V2,F2);
-std::cout<<"Vout = "<< Vout<<std::endl;
-    viewer.data.clear();
-    viewer.data.set_mesh(V2,F2);
-  //  viewer.data.set_uv(UV);
-  //  viewer.core.align_camera_center(VV);
-    viewer.core.show_texture = true;
+//igl::triangle::triangulate(Vout,Eout,Hout,"a1q",V2,F2);
+std::cout<<"End of Snake"<<std::endl;
+   // viewer.data.clear();
+   // viewer.data.set_mesh(V2,F2);
+   // viewer.core.show_texture = true;
 
     // Use the image as a texture
-//std::cout<< temp <<std::endl;
-  //  viewer.data.set_texture(R,G,B);
-
-// std::cout<<"G = "<<&G<<std::endl;
-// std::cout<<"B = "<<B<<std::endl;
-// std::cout<<"R = "<<R<<std::endl;
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> aaaa;
-//Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> &bbbb;
-//aaaa.resize(5,2);
-//	aaaa <<
-//	96,63,
-//	51,147,
-//	98,242,
-//	280,97,
-//	182,59;
-//bbbb = aaaa;
-//std::cout<<"aaaa = "<< aaaa <<std::endl;
-//std::cout<<"bbbb = "<< bbbb <<std::endl;
-//aaaa.array() += 1; 
-//std::cout<<"aaaa1 = "<< aaaa <<std::endl;
-//std::cout<<"bbbb1 = "<< bbbb <<std::endl;
-//*aaaa.array() += 1;
-//std::cout<<"aaaa2 = "<< aaaa <<std::endl;
-//std::cout<<"bbbb2 = "<< bbbb <<std::endl;
   }
 
 
@@ -258,40 +158,87 @@ int main(int argc, char *argv[])
 {
   using namespace Eigen;
   using namespace std;
+ Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> R1,G1,B1,A1,I1;
+    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> temp1;
+    // Read the PNG
+    temp1 = igl::png::readPNG("myim2.png",R1,G1,B1,A1,temp1);
 
+double rsize1 =(double)temp1.rows();
+double csize1 =(double)temp1.cols();
+std::cout<<"r = "<<rsize1<<" c = "<<csize1<<std::endl;
+Eigen::MatrixXd Vout1;
+Eigen::MatrixXi Eout1;
+Eigen::MatrixXd Hout1;
+Vout1.resize(5,2);
+Eout1.resize(5,2);
+
+Vout1(1,0) = -csize1/2;
+Vout1(1,1) = -rsize1/2;
+Vout1(2,0) = csize1/2;
+Vout1(2,1) = -rsize1/2;
+Vout1(3,0) = csize1/2;
+Vout1(3,1) = rsize1/2;
+Vout1(4,0) = -csize1/2;
+Vout1(4,1) = rsize1/2;
+Vout1(0,0) = 0;
+Vout1(0,1) = 0;
+
+Eout1(1,0) = 1;
+Eout1(1,1) = 2;
+Eout1(2,0) = 2;
+Eout1(2,1) = 3;
+Eout1(3,0) = 3;
+Eout1(3,1) = 4;
+Eout1(4,0) = 4;
+Eout1(4,1) = 1;
+Eout1(0,0) = 0;
+Eout1(0,1) = 0;
+
+
+
+Hout1.resize(1,2);
+Hout1 << 0,0;
   // Create the boundary of a square
-  V.resize(12,2);
-  E.resize(12,2);
-  H.resize(1,2);
+ // V.resize(12,2);
+ // E.resize(12,2);
+ // H.resize(1,2);
 
-xy.resize(10,2);
-xyedge.resize(10,2);
+//xy.resize(10,2);
+//xyedge.resize(10,2);
 
- V << 100,100, 200,100, 200,200, 100, 200,
-       50,50, 250,50, 250,250, 50, 250,
-       0,0, 300,0, 300,300, 0, 300;
+// V << 100,100, 200,100, 200,200, 100, 200,
+  //     50,50, 250,50, 250,250, 50, 250,
+  //     0,0, 300,0, 300,300, 0, 300;
 
 /*  V << -1,-1, 1,-1, 1,1, -1, 1,
        -2,-2, 2,-2, 2,2, -2, 2,
        -3,-3, 3,-3, 3,3, -3, 3;
 */
 //V = V-150;
-  E << 0,1, 1,2, 2,3, 3,0,
-       4,5, 5,6, 6,7, 7,4,
-       8,9, 9,10, 10,11, 11,8;
+//  E << 0,1, 1,2, 2,3, 3,0,
+  //     4,5, 5,6, 6,7, 7,4,
+  //     8,9, 9,10, 10,11, 11,8;
 
-  H << 0,1;
+ // H << 0,1;
+Eigen::MatrixXd V22;
+Eigen::MatrixXi F22;
 
   // Triangulate the interior
- // igl::triangle::triangulate(V,E,H,"a0.005q",V2,F2);
-igl::triangle::triangulate(V,E,H,"a5q",V2,F2);
+        igl::triangle::triangulate(Vout1,Eout1,Hout1,"a1q",V22,F22);
+	igl::viewer::Viewer viewer;
+//igl::triangle::triangulate(V,E,H,"a5q",V2,F2);
   // Plot the generated mesh
-  igl::viewer::Viewer viewer;
+	igl::viewer::Viewer viewer2;
+        
+	viewer2.data.clear();
+	viewer2.data.set_mesh(V22,F22);
+	viewer2.core.align_camera_center(V22,F22);
+	viewer2.core.show_texture = false;
+        viewer2.callback_key_down = &key_down;
+	viewer2.launch();
 
- // std::cout<<"V2 = "<<V2<<"F2 = "<<F2<<endl;
 // Wait for Key? 
-  viewer.callback_key_down = &key_down;
-
-  viewer.data.set_mesh(V2,F2);
-  viewer.launch();
+	
+	
+        
 }

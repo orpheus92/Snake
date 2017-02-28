@@ -10,5 +10,4 @@ double wl,
 double we,
 double wt,
 int sigma
-//int npts
 );

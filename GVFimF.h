@@ -12,6 +12,4 @@ double mu,
 int Giter,
 double sigma3,
 int style
-//int npts
-
 );
