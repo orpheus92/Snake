@@ -96,7 +96,7 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> intForce;
 //size = npts by npts
 //This is correct
 intForce = interF(npts,alpha,beta,gamma);
-std::cout<<"internal force = "<<intForce<<std::endl;
+//std::cout<<"internal force = "<<intForce<<std::endl;
 Eigen::MatrixXd Hout;
 Hout.resize(1,2);
 Hout << 0,0;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(604_Triangle)
+project(Snaketest)
 
 SET(SNAKE_SRC
   interpcont.cpp
